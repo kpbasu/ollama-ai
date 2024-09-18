@@ -79,7 +79,7 @@ applications. It also supports a wide range of programming languages and framewo
 # retrieving the route
 oc get route ollama-route -n ollama
 NAME           HOST/PORT                       PATH   SERVICES     PORT    TERMINATION   WILDCARD
-ollama-route   ollama.apps.openshift.lab              ollama-svc   11434                 None
+ollama-route   ollama.apps.example.com              ollama-svc   11434                 None
 
 # testing the route
 curl -s http://ollama.apps.openshift.lab/api/tags | jq .
