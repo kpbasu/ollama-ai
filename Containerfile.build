@@ -1,0 +1,51 @@
+FROM docker.io/nvidia/cuda:12.4.1-devel-ubi9
+
+ARG OLLAMA_VERSION
+ARG GOLANG_VERSION=1.22.1
+ARG CMAKE_VERSION=3.22.1
+
+ENV VERSION ${OLLAMA_VERSION}
+
+RUN dnf -y update \
+    && dnf install -y --nodocs pciutils git
+
+# The cmake and golang dependencies require special logic
+COPY ./scripts/rh_linux_deps.sh /
+RUN CMAKE_VERSION=${CMAKE_VERSION} GOLANG_VERSION=${GOLANG_VERSION} sh /rh_linux_deps.sh
+
+RUN dnf clean all && rm -rf /var/cache/* \
+    && git clone --depth 1 --branch $VERSION https://github.com/ollama/ollama.git
+
+#USER root
+WORKDIR /ollama
+
+RUN go generate ./... \
+    && go build . \
+    && ls -l /ollama
+
+# RUNTIME CONTAINER
+FROM docker.io/nvidia/cuda:12.4.1-runtime-ubi9
+ARG OLLAMA_VERSION
+
+RUN dnf -y update \
+    && dnf install -y --nodocs pciutils \
+    && dnf clean all && rm -rf /var/cache/*
+
+COPY --from=0 /ollama/ollama /usr/local/bin/ollama
+COPY VERSION /OLLAMA_VERSION
+
+LABEL maintainer=william.caban@gmail.com \
+      io.k8s.display-name="Ollama AI" \
+      summary="ollama.ai - tool for running LLMs locally"
+
+#ENV PYTHONDONTWRITEBYTECODE 1
+#ENV PYTHONUNBUFFERED 1
+
+EXPOSE 11434
+ENV OLLAMA_HOST 0.0.0.0
+ENV OLLAMA_VERSION ${OLLAMA_VERSION}-ubi9
+#ENV OLLAMA_ORIGINS  http://localhost:*,http://0.0.0.0:*
+ENV OLLAMA_MODELS /.ollama/models
+
+ENTRYPOINT ["/usr/local/bin/ollama"]
+CMD ["serve"]
