@@ -7,7 +7,7 @@ The images are published at `quay.io/kaliprasannabasu/ollama:latest`. See the fu
 
 ## Deploy the Pod
 
-**Prerequisites:** Must have the NVIDIA OpenShift Operator installed and operational
+***Prerequisites:*** NVIDIA/AMD OpenShift Operator installed and operational if you have GPUs.
 
 - Update and apply each one of the manifests to map to your environment
 
